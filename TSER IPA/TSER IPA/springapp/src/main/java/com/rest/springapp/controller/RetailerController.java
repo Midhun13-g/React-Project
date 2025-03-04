@@ -1,10 +1,10 @@
 package com.rest.springapp.controller;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,63 +20,77 @@ import com.rest.springapp.entities.Retailer;
 
 @RestController
 @RequestMapping("/api/retailers")
-@CrossOrigin(origins = "*") // Allow cross-origin requests
 public class RetailerController {
-    private final RetailerService retailerService;
+    
+    @Autowired
+    private RetailerService retailerService;
 
-    public RetailerController(RetailerService retailerService) {
-        this.retailerService = retailerService;
-    }
-
-    // ✅ Create Retailer
     @PostMapping
     public ResponseEntity<Retailer> createRetailer(@RequestBody Retailer retailer) {
         return ResponseEntity.ok(retailerService.createRetailer(retailer));
     }
 
-    // ✅ Get Retailer by ID
     @GetMapping("/{id}")
     public ResponseEntity<Retailer> getRetailerById(@PathVariable Long id) {
-        return ResponseEntity.ok(retailerService.getRetailerById(id));
+        Retailer retailer = retailerService.getRetailerById(id);
+        return retailer != null ? ResponseEntity.ok(retailer) : ResponseEntity.notFound().build();
     }
 
-    // ✅ Get All Retailers with Pagination & Sorting
     @GetMapping
-    public ResponseEntity<Page<Retailer>> getAllRetailers(
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size,
-        @RequestParam(defaultValue = "id") String sortBy,
-        @RequestParam(defaultValue = "asc") String sortDir
-    ) {
-        Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
-        Page<Retailer> retailerPage = retailerService.getAllRetailers(PageRequest.of(page, size, sort));
-        return ResponseEntity.ok(retailerPage);
+    public ResponseEntity<List<Retailer>> getAllRetailers() {
+        return ResponseEntity.ok(retailerService.getAllRetailers());
     }
 
-    // ✅ Search Retailers by Name (Using JPQL)
-    @GetMapping("/search")
-    public ResponseEntity<Page<Retailer>> searchRetailersByName(
-        @RequestParam(required = false) String name,
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "100") int size,
-        @RequestParam(defaultValue = "id") String sortBy,
-        @RequestParam(defaultValue = "asc") String sortDir
-    ) {
-        Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
-        Page<Retailer> retailerPage = retailerService.searchRetailersByName(name, PageRequest.of(page, size, sort));
-        return ResponseEntity.ok(retailerPage);
+    @GetMapping("/paged")
+    public ResponseEntity<Page<Retailer>> getRetailersWithPaginationAndSorting(@RequestParam int page, @RequestParam int size,
+                                                                               @RequestParam String sortBy, @RequestParam String order) {
+        return ResponseEntity.ok(retailerService.getRetailersWithPaginationAndSorting(page, size, sortBy, order));
     }
 
-    // ✅ Update Retailer
+    @GetMapping("/category/{category}")
+    public ResponseEntity<List<Retailer>> getRetailersByCategory(@PathVariable String category) {
+        return ResponseEntity.ok(retailerService.getRetailersByCategory(category));
+    }
+
+    @GetMapping("/name/{name}")
+    public ResponseEntity<List<Retailer>> getRetailersByName(@PathVariable String name) {
+        return ResponseEntity.ok(retailerService.getRetailersByName(name));
+    }
+
     @PutMapping("/{id}")
-    public ResponseEntity<Retailer> updateRetailer(@PathVariable Long id, @RequestBody Retailer retailer) {
-        return ResponseEntity.ok(retailerService.updateRetailer(id, retailer));
+    public ResponseEntity<Retailer> updateRetailerById(@PathVariable Long id, @RequestBody Retailer retailer) {
+        Retailer updatedRetailer = retailerService.updateRetailerById(id, retailer);
+        return updatedRetailer != null ? ResponseEntity.ok(updatedRetailer) : ResponseEntity.notFound().build();
     }
 
-    // ✅ Delete Retailer
+    @PutMapping("/name/{name}")
+    public ResponseEntity<Void> updateRetailerByName(@PathVariable String name, @RequestBody Retailer retailer) {
+        retailerService.updateRetailerByName(name, retailer);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/category/{category}")
+    public ResponseEntity<Void> updateRetailerByCategory(@PathVariable String category, @RequestBody String newCategory) {
+    retailerService.updateRetailerByCategory(category, newCategory);
+    return ResponseEntity.ok().build();
+}
+
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteRetailer(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteRetailerById(@PathVariable Long id) {
         retailerService.deleteRetailer(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/name/{name}")
+    public ResponseEntity<Void> deleteRetailerByName(@PathVariable String name) {
+        retailerService.deleteRetailerByName(name);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/category/{category}")
+    public ResponseEntity<Void> deleteRetailerByCategory(@PathVariable String category) {
+        retailerService.deleteRetailerByCategory(category);
         return ResponseEntity.noContent().build();
     }
 }
